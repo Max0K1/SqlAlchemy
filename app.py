@@ -84,6 +84,20 @@ def add_author_with_books():
     session.commit()
     return {"message": f"Author '{data['name']}' with books added successfully."}, 201
 
+@app.route("/authors/<int:author_id>", methods=["PUT"])
+def update_author(author_id):
+    data = request.get_json()
+    if not data or "name" not in data:
+        return {"message": "Invalid data, 'name' is required"}, 400
+
+    author = session.query(Author).get(author_id)
+    if not author:
+        return {"message": f"Author with ID {author_id} not found."}, 404
+
+    author.name = data["name"]
+    session.commit()
+    return {"message": f"Author with ID {author_id} updated successfully."}, 200
+
 # Маршрути для роботи з книгами
 @app.route("/books", methods=["GET"])
 def list_books():
@@ -127,7 +141,28 @@ def get_book_by_id(book_id):
     else:
         return {"message": f"Book with ID {book_id} not found."}, 404
 
+@app.route("/books/<int:book_id>", methods=["PUT"])
+def update_book(book_id):
+    data = request.get_json()
+    if not data:
+        return {"message": "Invalid data, 'title' or 'author_id' is required"}, 400
+
+    book = session.query(Book).get(book_id)
+    if not book:
+        return {"message": f"Book with ID {book_id} not found."}, 404
+
+    if "title" in data:
+        book.title = data["title"]
+
+    if "author_id" in data:
+        author = session.query(Author).get(data["author_id"])
+        if not author:
+            return {"message": f"Author with ID {data['author_id']} not found."}, 404
+        book.author = author
+
+    session.commit()
+    return {"message": f"Book with ID {book_id} updated successfully."}, 200
+
 # Запуск сервера
 if __name__ == "__main__":
     app.run(debug=True)
-    
